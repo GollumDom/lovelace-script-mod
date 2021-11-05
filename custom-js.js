@@ -1,12 +1,21 @@
 console.log('%c Custom JS :%c 0.0.1 ', 'background: #222; color: #bada55', 'background: #bada55; color: #222');
 
 
-export function findConfig(node) {
-	if (node.config) return node.config;
-	if (node._config) return node._config;
-	if (node.host) return findConfig(node.host);
-	if (node.parentElement) return findConfig(node.parentElement);
-	if (node.parentNode) return findConfig(node.parentNode);
+function find(node, name) {
+	if (node[name]) return node[name];
+	if (node['_' + name]) return node._config;
+	if (node.host) return find(node.host, name);
+	if (node.parentElement) return find(node.parentElement, name);
+	if (node.parentNode) return find(node.parentNode, name);
+	return null;
+}
+
+function findMainNode(node) {
+	if (node.config) return node;
+	if (node._config) return node;
+	if (node.host) return findMainNode(node.host);
+	if (node.parentElement) return findMainNode(node.parentElement);
+	if (node.parentNode) return findMainNode(node.parentNode);
 	return null;
 }
 
@@ -19,15 +28,33 @@ function injectInElement(cardName) {
 		const _firstUpdated = HaCard.prototype.firstUpdated;
 		HaCard.prototype.firstUpdated = function (changedProperties) {
 			
-			const config = findConfig(this);
+			const config = find(this, 'config');
+			const hass = find(this, 'hass');
+			const main = findMainNode(this);
 			if (config && config.custom_script && config.custom_script.before) {
 				const fc = Function(`const fc = ${config.custom_script.before}; fc.apply(this, arguments);`)
-				fc(this, changedProperties);
+				fc({
+					hass,
+					config,
+					main,
+					html: this.html,
+					css: this.css,
+					element: this,
+					changedProperties
+				});
 			}
 			_firstUpdated?.bind(this)(changedProperties);
 			if (config && config.custom_script && config.custom_script.after) {		
 				const fc = Function(`const fc = ${config.custom_script.after}; fc.apply(this, arguments);`)
-				fc(this, changedProperties);
+				fc({
+					hass,
+					config,
+					main,
+					html: this.html,
+					css: this.css,
+					element: this,
+					changedProperties
+				});
 			}
 			
 			

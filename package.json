@@ -1,6 +1,6 @@
 {
   "name": "@gollum-dom/lovelace-script-mod",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Add custom script in lovelace card for Home Assistant",
   "main": "custom-js.js",
   "scripts": {

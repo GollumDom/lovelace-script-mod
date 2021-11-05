@@ -6,7 +6,7 @@ Add custom script in lovelace card
 Add script in your configuration / Lovelace / resources:
 
 ```
-https://unpkg.com/@gollum-dom/lovelace-script-mod@0.0.1/custom-js.js
+https://unpkg.com/@gollum-dom/lovelace-script-mod
 ```
 
 And in your card configuration:
