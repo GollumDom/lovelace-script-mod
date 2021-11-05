@@ -13,23 +13,21 @@ export function findConfig(node) {
 function injectInElement(cardName) {
 	customElements.whenDefined(cardName).then(() => {
 		const HaCard = customElements.get(cardName);
-		if (HaCard.prototype.scrtiptmod_patched) return;
-		HaCard.prototype.scrtiptmod_patched = true;
+		if (HaCard.prototype.customScript_patched) return;
+		HaCard.prototype.customScript_patched = true;
 		
 		const _firstUpdated = HaCard.prototype.firstUpdated;
 		HaCard.prototype.firstUpdated = function (changedProperties) {
 			
 			const config = findConfig(this);
-			if (config && config.custom_script) {
-				if (config.custom_script.before) {
-					const fc = Function(`const fc = ${config.custom_script.before}; fc.apply(this, arguments);`)
-					fc(this, changedProperties);
-				}
-				if (config.custom_script.after) {		
-					const fc = Function(`const fc = ${config.custom_script.after}; fc.apply(this, arguments);`)
-					fc(this, changedProperties);
-				}
-				
+			if (config && config.custom_script && config.custom_script.before) {
+				const fc = Function(`const fc = ${config.custom_script.before}; fc.apply(this, arguments);`)
+				fc(this, changedProperties);
+			}
+			_firstUpdated?.bind(this)(changedProperties);
+			if (config && config.custom_script && config.custom_script.after) {		
+				const fc = Function(`const fc = ${config.custom_script.after}; fc.apply(this, arguments);`)
+				fc(this, changedProperties);
 			}
 			
 			
@@ -94,32 +92,32 @@ customElements.whenDefined("hui-card-element-editor").then(() => {
 });
 
 customElements.whenDefined("hui-dialog-edit-card").then(() => {
-  const HuiDialogEditCard = customElements.get("hui-dialog-edit-card");
-  if (HuiDialogEditCard.prototype.customScript_patched) return;
-  HuiDialogEditCard.prototype.customScript_patched = true;
+	const HuiDialogEditCard = customElements.get("hui-dialog-edit-card");
+	if (HuiDialogEditCard.prototype.customScript_patched) return;
+	HuiDialogEditCard.prototype.customScript_patched = true;
 
-  const _updated = HuiDialogEditCard.prototype.updated;
-  HuiDialogEditCard.prototype.updated = function (changedProps) {
-    _updated?.bind(this)(changedProps);
-    this.updateComplete.then(async () => {
-      if (!this._customScriptIcon) {
-        this._customScriptIcon = document.createElement("ha-icon");
-        this._customScriptIcon.icon = "mdi:script-text";
-      }
+	const _updated = HuiDialogEditCard.prototype.updated;
+	HuiDialogEditCard.prototype.updated = function (changedProps) {
+		_updated?.bind(this)(changedProps);
+		this.updateComplete.then(async () => {
+			if (!this._customScriptIcon) {
+				this._customScriptIcon = document.createElement("ha-icon");
+				this._customScriptIcon.icon = "mdi:script-text";
+			}
 
-      const button = this.shadowRoot.querySelector(
-        "mwc-button[slot=secondaryAction]"
-      );
-      if (!button) return;
-      button.appendChild(this._customScriptIcon);
-      if (
-        this._cardConfig?.custom_script ||
-        this._cardConfig?.entities?.some((e) => e.custom_script)
-      ) {
-        this._customScriptIcon.style.display = "inherit";
-      } else {
-        this._customScriptIcon.style.display = "none";
-      }
-    });
-  };
+			const button = this.shadowRoot.querySelector(
+				"mwc-button[slot=secondaryAction]"
+			);
+			if (!button) return;
+			button.appendChild(this._customScriptIcon);
+			if (
+				this._cardConfig?.custom_script ||
+				this._cardConfig?.entities?.some((e) => e.custom_script)
+			) {
+				this._customScriptIcon.style.display = "inherit";
+			} else {
+				this._customScriptIcon.style.display = "none";
+			}
+		});
+	};
 });

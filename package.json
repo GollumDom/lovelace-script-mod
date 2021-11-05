@@ -1,0 +1,24 @@
+{
+  "name": "@gollum-dom/lovelace-script-mod",
+  "version": "0.0.2",
+  "description": "Add custom script in lovelace card for Home Assistant",
+  "main": "custom-js.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GollumDom/lovelace-script-mod.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/GollumDom/lovelace-script-mod/issues"
+  },
+  "homepage": "https://github.com/GollumDom/lovelace-script-mod#readme",
+  "files": [
+    "README.mb",
+    "LICENSE",
+    "custom-js.js"
+  ]
+}
