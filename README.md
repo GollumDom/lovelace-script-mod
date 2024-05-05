@@ -19,7 +19,7 @@ custom_script:
     ({ main, hass, config, html }) => {
         console.log(main, hass, config, html)
     }
-  after: >
+  after: |
     ({ main, hass, config, html }) => {
         console.log(main, hass, config, html)
     }
@@ -54,6 +54,34 @@ It has the advantage of loading and applying even to elements already loaded in 
  - If you want to switch shadow DOMs, you must use a $ in the rules. Basically, given as an example, this rule will do this:
 ```
 div $ span p $ label => main.querySelector('div').shadowRoot.querySelector('span p').shadowRoot.querySelector('label')
-```"
+```
+
+## Example usage
+
+```
+type: markdown
+content: ' '
+custom_script:
+  after: |
+    ({ main, hass, config, html }) => {
+
+      const root = main.shadowRoot.querySelector('ha-markdown').shadowRoot;
+      const div = document.createElement('div');
+      let content = '<p>Hello World</p><ul>'
+      
+      Object.values(hass.devices).forEach(d => content += `<li>${d.name}</li>`)
+      
+      content += '</u>'
+      div.innerHTML = content;
+      root.appendChild(div);
+      console.log(main);
+    }
+  style:
+    ha-markdown $: |
+      li {
+         border: 1px red solid !important;
+      }
+```
+![Example](https://raw.githubusercontent.com/GollumDom/lovelace-script-mod/master/docs/example.jpg)
 
 
