@@ -58,7 +58,7 @@ div $ span p $ label => main.querySelector('div').shadowRoot.querySelector('span
 
 ## Example usage
 
-```
+```yaml
 type: markdown
 content: ' '
 custom_script:
