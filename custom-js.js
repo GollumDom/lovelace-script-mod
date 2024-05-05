@@ -1,7 +1,12 @@
-console.log('%c Custom JS :%c 0.0.1 ', 'background: #222; color: #bada55', 'background: #bada55; color: #222');
-
+console.info(
+	'\n %c Custom JS %c v0.0.1 %c \n',
+	'background-color: #555;color: #fff;padding: 3px 2px 3px 3px;border-radius: 3px 0 0 3px;font-family: DejaVu Sans,Verdana,Geneva,sans-serif;text-shadow: 0 1px 0 rgba(1, 1, 1, 0.3)',
+	'background-color: #bc81e0;background-image: linear-gradient(90deg, #b65cff, #11cbfa);color: #fff;padding: 3px 3px 3px 2px;border-radius: 0 3px 3px 0;font-family: DejaVu Sans,Verdana,Geneva,sans-serif;text-shadow: 0 1px 0 rgba(1, 1, 1, 0.3)',
+	'background-color: transparent'
+);
 
 function find(node, name) {
+	if (!node) return null;
 	if (node[name]) return node[name];
 	if (node['_' + name]) return node._config;
 	if (node.host) return find(node.host, name);
@@ -19,19 +24,34 @@ function findMainNode(node) {
 	return null;
 }
 
+function findAllInjectedCards(cardName, element) {
+	let cards = [];
+
+	// Cherche les éléments ha-card dans l'élément actuel
+	cards = cards.concat(Array.from(element.querySelectorAll(cardName)));
+
+	// Parcourt tous les éléments enfants pour trouver des shadow roots
+	element.querySelectorAll('*').forEach((el) => {
+		if (el.shadowRoot) {
+			// Appel récursif pour les éléments trouvés dans le shadow DOM
+			cards = cards.concat(findAllInjectedCards(cardName, el.shadowRoot));
+		}
+	});
+
+	return cards;
+}
+
 function injectInElement(cardName) {
 	customElements.whenDefined(cardName).then(() => {
 		const HaCard = customElements.get(cardName);
 		if (HaCard.prototype.customScript_patched) return;
 		HaCard.prototype.customScript_patched = true;
 		
-		const _firstUpdated = HaCard.prototype.firstUpdated;
-		HaCard.prototype.firstUpdated = function (changedProperties) {
-			
+		const beforeFirstUpdate = function() {
 			const config = find(this, 'config');
 			const hass = find(this, 'hass');
 			const main = findMainNode(this);
-			if (config && config.custom_script && config.custom_script.before) {
+			if (config?.custom_script?.before) {
 				const fc = Function(`const fc = ${config.custom_script.before}; fc.apply(this, arguments);`)
 				fc({
 					hass,
@@ -39,12 +59,15 @@ function injectInElement(cardName) {
 					main,
 					html: this.html,
 					css: this.css,
-					element: this,
-					changedProperties
+					element: this
 				});
 			}
-			_firstUpdated?.bind(this)(changedProperties);
-			if (config && config.custom_script && config.custom_script.after) {		
+		}
+		const afterFirstUpdate = function() {
+			const config = find(this, 'config');
+			const hass = find(this, 'hass');
+			const main = findMainNode(this);
+			if (config?.custom_script?.after) {		
 				const fc = Function(`const fc = ${config.custom_script.after}; fc.apply(this, arguments);`)
 				fc({
 					hass,
@@ -52,12 +75,110 @@ function injectInElement(cardName) {
 					main,
 					html: this.html,
 					css: this.css,
-					element: this,
-					changedProperties
+					element: this
 				});
 			}
-			
-			
+		}
+		const flatKeys = (obj, prefix) => {
+			prefix = prefix || '';
+			let result = {};
+			for(const [name, value] of Object.entries(obj))  {
+				if (typeof value === 'string') {
+					result[prefix + ' ' + name] = value
+				} else {
+					result = {
+						...result,
+						...flatKeys(value, prefix + ' ' + name),
+					}
+				}
+			}
+			return result;
+		}
+		
+		function queryNestedSelectors(el, rule) {
+			try {
+				rule = rule.trim();
+				if (rule === '') {
+					return [el];
+				}
+				if (rule[0] === '$') {
+					const shadow = el.shadowRoot;
+					if (shadow) {
+						return queryNestedSelectors(shadow, rule.slice(1));
+					}
+					return [];
+				}
+				const index = rule.indexOf('$');
+				if (index !== -1) {
+					const rest = rule.slice(index);
+					rule = rule.slice(0, index);
+					return [...el.querySelectorAll(rule)]
+						.map(sub => sub ? queryNestedSelectors(sub, rest) : [])
+						.flat()
+					;
+				}
+				return el.querySelectorAll(rule);
+			} catch(e) {
+				console.error(e);
+			}
+			return [];
+		}
+		
+		const addStyle = function() {
+			const config = find(this, 'config');
+			const style = config?.custom_script?.style;
+			if (style) {
+				const flatten = flatKeys(style);
+				for (const [ rule, s ] of Object.entries(flatten)) {
+					const targets = queryNestedSelectors(this, rule);
+					targets.forEach(target => {
+						const found = target.querySelector('style[data-injected="'+rule+'"]');
+						if (!found) {
+							const balise = document.createElement('style');
+							balise.setAttribute('data-injected', rule);
+							balise.innerHTML = s;
+							target.appendChild(balise);
+						}
+					});
+				}
+			}
+		};
+		
+		
+		const allInjected = findAllInjectedCards(cardName, document);
+		for (const injected of allInjected) {
+			(() => {
+				const _firstUpdated = allInjected.firstUpdated;
+				injected.firstUpdated = function (changedProperties) {
+					beforeFirstUpdate.bind(this)();
+					_firstUpdated?.bind(this)(changedProperties);
+					afterFirstUpdate.bind(this)();
+				};
+				beforeFirstUpdate.bind(injected)();
+				afterFirstUpdate.bind(injected)();
+				setTimeout(addStyle.bind(this), 100);
+				setTimeout(addStyle.bind(this), 200);
+				setTimeout(addStyle.bind(this), 300);
+				setTimeout(addStyle.bind(this), 400);
+				setTimeout(addStyle.bind(this), 500);
+				setTimeout(addStyle.bind(this), 600);
+				setTimeout(addStyle.bind(this), 700);
+			})();
+		}
+		
+		const _firstUpdated = HaCard.prototype.firstUpdated;
+		HaCard.prototype.firstUpdated = function (changedProperties) {
+			beforeFirstUpdate.bind(this)();
+			_firstUpdated?.bind(this)(changedProperties);
+			afterFirstUpdate.bind(this)();
+			addStyle.bind(this)();
+			setTimeout(addStyle.bind(this), 100);
+			setTimeout(addStyle.bind(this), 200);
+			setTimeout(addStyle.bind(this), 300);
+			setTimeout(addStyle.bind(this), 400);
+			setTimeout(addStyle.bind(this), 500);
+			setTimeout(addStyle.bind(this), 600);
+			setTimeout(addStyle.bind(this), 700);
 		};
 		
 	});
