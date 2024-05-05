@@ -15,11 +15,26 @@ And in your card configuration:
 type: 'TYPE'
 [...]
 custom_script:
-  before: >
-    (element, changedProperties) => { console.log('before_script', element,
-    changedProperties) }
+  before: |
+    ({ main, hass, config, html }) => {
+        console.log(main, hass, config, html)
+    }
   after: >
-    (element, changedProperties) => { console.log('after_script', element,
-    changedProperties) }
+    ({ main, hass, config, html }) => {
+        console.log(main, hass, config, html)
+    }
+  style:
+    hui-horizontal-stack-card:
+      $: |
+        ha-card {
+          border: 1px red solid;
+       }
+    hui-horizontal-stack-card$ ha-card:
+      $: |
+        div {
+          backgdound: green;
+        }
+ 
+          
 ```
 
