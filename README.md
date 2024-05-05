@@ -34,7 +34,26 @@ custom_script:
         div {
           backgdound: green;
         }
- 
-          
 ```
+### Before and After
+
+Before executes before the firstUpdate of the web component and after will run just after. Of course, if the component already exists on the page when the script loads, both will immediately execute on it.
+The variables in the parameter are the following:
+
+ - **main**: Represents the current web component of the script.
+ - **hass**: Represents the main hass variable of the lovelace components.
+ - **config**: The config object of the component.
+ - **el**: The HTML element where the script applies (often similar to main).
+
+### Style:
+
+The config style works similarly to the lovelace plugin https://github.com/thomasloven/lovelace-card-mod
+It has the advantage of loading and applying even to elements already loaded in lovelace.
+
+ - You can target each element in the current shadow DOM.
+ - If you want to switch shadow DOMs, you must use a $ in the rules. Basically, given as an example, this rule will do this:
+```
+div $ span p $ label => main.querySelector('div').shadowRoot.querySelector('span p').shadowRoot.querySelector('label')
+```"
+
 
